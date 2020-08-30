@@ -53,7 +53,7 @@ class contentScene {
         controls.addEventListener("change", () => {
             // if (this.isMover) return;
             this.initCameraXYZ = JSON.parse(JSON.stringify(this.camera.position))
-            console.log(this.initCameraXYZ)
+            // console.log(this.initCameraXYZ)
             this.renderer.render(this.scene, this.camera);
         }); //监听鼠标、键盘事件
 
@@ -278,7 +278,7 @@ class MAP3D extends contentScene {
                 // this.scene.remove(this.map);
                 // console.log(this.scene);
                 // this.getMap("https://sudos.xrdev.cn/map/zhejiang.json");
-                console.log(this.activeInstersect[0].object.parent.properties);
+                // console.log(this.activeInstersect[0].object.parent.properties);
             } else {
                 if (this.activeInstersect && this.activeInstersect.length > 0) {
                     this.activeInstersect.forEach(element => {
