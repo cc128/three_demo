@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>行走模型</title>
+</head>
+
+<!-- <script src="http://www.yanhuangxueyuan.com/threejs/build/three.js"></script> -->
+<script src="js/three.js"></script>
+
+<!-- <script src="https://d3js.org/d3-array.v1.min.js"></script> -->
+<script src="js/d3-array.v1.min.js"></script>
+
+<!-- <script src="https://d3js.org/d3-geo.v1.min.js"></script> -->
+<script src="js/d3-geo.v1.min.js"></script>
+
+<!-- <script src="http://mrdoob.github.io/stats.js/build/stats.min.js"></script> -->
+<script src="js/stats.js"></script>
+
+<!-- <script src="http://www.yanhuangxueyuan.com/threejs/examples/js/controls/OrbitControls.js"></script> -->
+<script src="js/OrbitControls.js"></script>
+<!-- <script src="http://www.yanhuangxueyuan.com/threejs/examples/js/loaders/STLLoader.js"></script> -->
+<script src="js/STLLoader.js"></script>
+<!-- <script src="http://www.yanhuangxueyuan.com/threejs/examples/js/loaders/OBJLoader.js"></script> -->
+<script src="js//OBJLoader.js"></script>
+<!-- <script src="http://www.yanhuangxueyuan.com/threejs/examples/js/loaders/MTLLoader.js"></script> -->
+<script src="js/MTLLoader.js"></script>
+
+<script src="js/MeshLine.js"></script>
+
+<!-- 引入fbx模型加载库FBXLoader -->
+<!-- <script src="http://www.yanhuangxueyuan.com/versions/threejsR92/examples/js/loaders/FBXLoader.js"></script> -->
+<script src="js/FBXLoader.js"></script>
+<!-- 辅助文件 -->
+<!-- <script src="http://www.yanhuangxueyuan.com/versions/threejsR92/examples/js/libs/inflate.min.js"></script> -->
+<script src="js/inflate.js"></script>
+
+<style>
+    html,
+    body {
+        width: 100%;
+        height: 100%;
+    }
+
+    * {
+        padding: 0;
+        margin: 0;
+    }
+
+    .bg {
+        color: #fff;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+        position: fixed;
+        z-index: 1;
+        text-align: center;
+        line-height: 50vh;
+        font-size: 30px;
+        display: none;
+    }
+
+    .top,
+    .bottom,
+    .left,
+    .right {
+        color: #fff;
+        width: 50px;
+        height: 50px;
+        background: #000;
+        text-align: center;
+        line-height: 50px;
+        position: fixed;
+        bottom: 150px;
+        left: 50%;
+        margin-left: -25px;
+        z-index: 2;
+        border-radius: 5px;
+        border: 1px solid #fff;
+    }
+
+    .bottom {
+        bottom: 100px;
+    }
+
+    .left {
+        left: 50%;
+        margin-left: -75px;
+        bottom: 100px;
+    }
+
+    .right {
+        left: 50%;
+        margin-left: 25px;
+        bottom: 100px;
+    }
+
+    #model {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        position: relative;
+        /* border: 1px solid red; */
+    }
+</style>
+
+<body>
+    <div class="bg">
+        模型加载中。。。
+    </div>
+    <div class="top" onclick="topBtn()">W</div>
+    <div class="bottom" onclick="bottomBtn()">S</div>
+    <div class="left" onclick="leftBtn()">A</div>
+    <div class="right" onclick="rightBtn()">D</div>
+    <div id="model">
+    </div>
+</body>
+<script src="index.js"></script>
+<script>
+    let direction = 6.3 / 4; //旋转45度的值
+    let Z = 0;
+    let X = 0;
+    let rotateY = 0;
+    let Scene = new SCENE(document.getElementById("model"));
+    Scene.createLight(); //光源
+    Scene.createCamera({ x: 0, y: 2000, z: -2000 }); //摄像机
+    Scene.createRender(); //渲染器
+    Scene.createFBX(Progress => {
+        document.getElementsByClassName("bg")[0].style.display = "block";
+        document.getElementsByClassName("bg")[0].innerHTML = "模型加载(" + parseInt(Progress.loaded / Progress.total * 100) + "%)"
+    }).then(
+        res => {
+            document.getElementsByClassName("bg")[0].style.display = "none";
+            // console.log(res, 11111111);
+        },
+        err => {
+            document.getElementsByClassName("bg")[0].style.display = "none";
+            // console.log(err, 222222222);
+            alert("加载失败请检查网络")
+        }
+    );
+    // Scene.cameraHelper(); //光源辅助线
+    // Scene.axesHelper(); //坐标辅助线
+    Scene.createPlane(1000, 1000); //平面
+    Scene.gridHelper(1000, 10); //平面辅助线
+    Scene.render();
+    document.addEventListener("keydown", e => {
+        // console.log(e.keyCode);
+        // 上
+        if (e.keyCode == 87) {
+            topBtn()
+        }
+        // 下
+        if (e.keyCode == 83) {
+            bottomBtn()
+        }
+        // 左
+        if (e.keyCode == 65) {
+            leftBtn()
+        }
+        // 右
+        if (e.keyCode == 68) {
+            rightBtn()
+        }
+    });
+    function topBtn() {
+        Z += 3;
+        Scene.moverModel(X, 0, Z);
+        Scene.rotateModel(0, 0, 0);
+        Scene.runAnimation();
+        document.getElementsByClassName("top")[0].style.background = "red";
+        document.getElementsByClassName("bottom")[0].style.background = "#000";
+        document.getElementsByClassName("left")[0].style.background = "#000";
+        document.getElementsByClassName("right")[0].style.background = "#000";
+    }
+    function bottomBtn() {
+        Z -= 3;
+        Scene.moverModel(X, 0, Z);
+        Scene.rotateModel(0, -direction * 2, 0);
+        Scene.runAnimation();
+        document.getElementsByClassName("top")[0].style.background = "#000";
+        document.getElementsByClassName("bottom")[0].style.background = "red";
+        document.getElementsByClassName("left")[0].style.background = "#000";
+        document.getElementsByClassName("right")[0].style.background = "#000";
+    }
+    function leftBtn() {
+        X += 3;
+        Scene.moverModel(X, 0, Z);
+        Scene.rotateModel(0, direction, 0);
+        Scene.runAnimation();
+        document.getElementsByClassName("top")[0].style.background = "#000";
+        document.getElementsByClassName("bottom")[0].style.background = "#000";
+        document.getElementsByClassName("left")[0].style.background = "red";
+        document.getElementsByClassName("right")[0].style.background = "#000";
+    }
+    function rightBtn() {
+        X -= 3;
+        Scene.moverModel(X, 0, Z);
+        Scene.rotateModel(0, -direction, 0);
+        Scene.runAnimation();
+        document.getElementsByClassName("top")[0].style.background = "#000";
+        document.getElementsByClassName("bottom")[0].style.background = "#000";
+        document.getElementsByClassName("left")[0].style.background = "#000";
+        document.getElementsByClassName("right")[0].style.background = "red";
+    }
+    document.addEventListener("keyup", e => {
+        // 上
+        if (e.keyCode == 87) {
+            document.getElementsByClassName("top")[0].style.background = "#000";
+        }
+        // 下
+        if (e.keyCode == 83) {
+            document.getElementsByClassName("bottom")[0].style.background = "#000";
+            // Scene.animationStop();
+        }
+        // 左
+        if (e.keyCode == 65) {
+            document.getElementsByClassName("left")[0].style.background = "#000";
+        }
+        // 右
+        if (e.keyCode == 68) {
+            document.getElementsByClassName("right")[0].style.background = "#000";
+        }
+    });
+</script>
+
+</html>

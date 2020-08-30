@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>地球</title>
+</head>
+
+<!-- <script src="http://www.yanhuangxueyuan.com/threejs/build/three.js"></script> -->
+<script src="js/three.js"></script>
+
+<!-- <script src="https://d3js.org/d3-array.v1.min.js"></script> -->
+<script src="js/d3-array.v1.min.js"></script>
+
+<!-- <script src="https://d3js.org/d3-geo.v1.min.js"></script> -->
+<script src="js/d3-geo.v1.min.js"></script>
+
+<!-- <script src="http://mrdoob.github.io/stats.js/build/stats.min.js"></script> -->
+<script src="js/stats.js"></script>
+
+<!-- <script src="http://www.yanhuangxueyuan.com/threejs/examples/js/controls/OrbitControls.js"></script> -->
+<script src="js/OrbitControls.js"></script>
+<!-- <script src="http://www.yanhuangxueyuan.com/threejs/examples/js/loaders/STLLoader.js"></script> -->
+<script src="js/STLLoader.js"></script>
+<!-- <script src="http://www.yanhuangxueyuan.com/threejs/examples/js/loaders/OBJLoader.js"></script> -->
+<script src="js//OBJLoader.js"></script>
+<!-- <script src="http://www.yanhuangxueyuan.com/threejs/examples/js/loaders/MTLLoader.js"></script> -->
+<script src="js/MTLLoader.js"></script>
+
+<script src="js/MeshLine.js"></script>
+
+<!-- 引入fbx模型加载库FBXLoader -->
+<!-- <script src="http://www.yanhuangxueyuan.com/versions/threejsR92/examples/js/loaders/FBXLoader.js"></script> -->
+<script src="js/FBXLoader.js"></script>
+<!-- 辅助文件 -->
+<!-- <script src="http://www.yanhuangxueyuan.com/versions/threejsR92/examples/js/libs/inflate.min.js"></script> -->
+<script src="js/inflate.js"></script>
+
+<style>
+    html,
+    body {
+        width: 100%;
+        height: 100%;
+    }
+
+    * {
+        padding: 0;
+        margin: 0;
+    }
+
+    #globe {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        position: relative;
+        /* border: 1px solid red; */
+    }
+</style>
+
+<body>
+    <div id="globe">
+    </div>
+</body>
+<script src="index.js"></script>
+<script>
+    let Scene = new SCENE(document.getElementById("globe"));
+    Scene.createLight(); //光源
+    Scene.createCamera({ x: 0, y: 400, z: -950 }); //摄像机
+    Scene.createRender(); //渲染器
+    // Scene.cameraHelper(); //光源辅助线
+    // Scene.axesHelper(); //坐标辅助线
+    Scene.createPlane(1000, 1000); //平面
+    // Scene.gridHelper(1000, 10); //平面辅助线
+    //创建网格模型
+    // let geometry = new THREE.BoxGeometry(100, 100, 100);
+    let geometry = new THREE.SphereGeometry(60, 25, 25);
+    // let material2 = new THREE.MeshBasicMaterial({ color: 0x00ff00 }); //基础网格材质，不受光照影响的材质
+    // let material2 = new THREE.MeshLambertMaterial({ color: 0x00ff00 }); //Lambert网格材质，与光照有反应，漫反射
+    // let material2 = new THREE.MeshPhongMaterial({ color: 0x00ff00 }); //高光Phong材质,与光照有反应
+    // let material2 = new THREE.MeshStandardMaterial({ color: 0x00ff00 }); //PBR物理材质，相比较高光Phong材质可以更好的模拟金属、玻璃等效果
+    let textureLoader = new THREE.TextureLoader(); // TextureLoader创建一个纹理加载器对象，可以加载图片作为几何体纹理
+    textureLoader.load("/earth.jpg", function (texture) {
+        var material = new THREE.MeshLambertMaterial({
+            // color: 0x0000ff,
+            // 设置颜色纹理贴图：Texture对象作为材质map属性的属性值
+            map: texture //设置颜色贴图属性值
+        }); //材质对象Material
+        let mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(0, 80, 0); //位置
+        Scene.scene.add(mesh); //网格模型添加到场景中
+        mesh.castShadow = true;
+        Scene.render();
+        let T0 = new Date(); //上次时间
+        function render() {
+            let T1 = new Date(); //本次时间
+            let t = T1 - T0; //时间差
+            T0 = T1; //把本次时间赋值给上次时间
+            Scene.render();
+            // renderer.render(scene, camera); //执行渲染操作
+            // mesh1.rotateY(0.001 * t); //旋转角速度0.001弧度每毫秒
+            // mesh2.rotateY(0.001 * t); //旋转角速度0.001弧度每毫秒
+            // mesh3.rotateY(0.001 * t); //旋转角速度0.001弧度每毫秒
+            mesh.rotateY(0.001 * t); //旋转角速度0.001弧度每毫秒
+            requestAnimationFrame(render);
+        }
+        render();
+    });
+</script>
+
+</html>
