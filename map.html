@@ -82,13 +82,37 @@
     let X = 0;
     let rotateY = 0;
     let Scene = new MAP3D(document.getElementById("map"));
+    Scene.getMap(
+        {
+            areaData: [
+                {
+                    value: 1,
+                    name: "浙江省",
+                    url: "https://sudos.xrdev.cn/map/zhejiang.json",
+                    tier: 2
+                },
+                {
+                    value: 2,
+                    name: "四川省",
+                    url: "https://sudos.xrdev.cn/map/sichuan.json",
+                    tier: 2
+                },
+                {
+                    value: 3,
+                    name: "山东省",
+                    url: "https://sudos.xrdev.cn/map/shandong.json",
+                    tier: 2
+                }
+            ]
+        }
+    );
     Scene.createLight(); //光源
-    Scene.createCamera(); //摄像机
+    Scene.createCamera({ x: 15, y: 400, z: 120 }); //摄像机
     Scene.createRender(); //渲染器
     // Scene.cameraHelper(); //光源辅助线
     // Scene.axesHelper(); //坐标辅助线
-    Scene.createPlane(); //平面
-    Scene.gridHelper(); //平面辅助线
+    // Scene.createPlane(); //平面
+    // Scene.gridHelper(); //平面辅助线
 </script>
 
 </html>

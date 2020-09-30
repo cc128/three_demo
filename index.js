@@ -37,7 +37,24 @@ class contentScene {
     } // 摄像机
     createRender() {
         this.renderer.setSize(this.width, this.height); //设置渲染区域尺寸
-        this.renderer.setClearColor(0x000000, 1); //设置背景颜色
+        // this.renderer.setClearColor(0xffffff, 1); //设置背景颜色
+        // this.scene.background = new THREE.CubeTextureLoader().load(["https://www.baidu.com/img/PCtm_d9c8750bed0b3c7d089fa7d55720d6cf.png"]);; //作为背景贴图
+        this.scene.background = new THREE.CubeTextureLoader()
+            .setPath('./model/')
+            .load([
+                // 'gray_nx.jpg',
+                // 'gray_ny.jpg',
+                // 'gray_nz.jpg',
+                // 'gray_px.jpg',
+                // 'gray_py.jpg',
+                // 'gray_pz.jpg',
+                'TropicalSunnyDay_px.jpg',
+                'TropicalSunnyDay_nx.jpg',
+                'TropicalSunnyDay_py.jpg',
+                'TropicalSunnyDay_ny.jpg',
+                'TropicalSunnyDay_pz.jpg',
+                'TropicalSunnyDay_nz.jpg',
+            ]);
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; // 默认的是，没有设置的这个清晰 THREE.PCFShadowMap
         if (this.el) {
@@ -50,10 +67,14 @@ class contentScene {
             this.camera,
             this.renderer.domElement
         ); //创建控件对象
+        // controls.zoomSpeed = 0.4; // 滚轮-滚动速度
+        controls.rotateSpeed = 0.5; // 拖到旋转速度
+        controls.dampingFactor = 0.1;
         controls.addEventListener("change", () => {
             // if (this.isMover) return;
             this.initCameraXYZ = JSON.parse(JSON.stringify(this.camera.position))
             // console.log(this.initCameraXYZ)
+            console.log(this.camera)
             this.renderer.render(this.scene, this.camera);
         }); //监听鼠标、键盘事件
 
@@ -107,34 +128,17 @@ class MAP3D extends contentScene {
         this.activeInstersect = [];
         this.eventOffset = {};
         this.markingObj = {}; // 标记地点three对象
-        this.borderColor = "red"; //地图边框颜色
-        this.mapColor = "#02A1E2"; //地图颜色
-        this.sideMapColor = "#3480C4"; //地图侧面颜色
-        this.moveMapColor = "#ff0000"; //地图侧面颜色
-
-        this.centrepoint = [104.0, 37.5];
-        // 墨卡托投影转换
-        this.projection = d3
-            .geoMercator()
-            .center(this.centrepoint)
-            // .scale(100)
-            .translate([0, 0]);
         this.linkZ = 10; //线条弧度
         this.raycaster = new THREE.Raycaster(); //Raycaster(光射线投射)，可以获取鼠标经过哪个物体上。
         this.map = new THREE.Object3D(); // 建一个空对象存放对象
         this.fileLoader = new THREE.FileLoader(); //文件加载器
-        this.zHeight = 4; // 地图z轴厚度
-        this.faceColor = "#323C48"; // 地图正面颜色
-        this.sideColor = "#000000"; // 地图侧边颜色
         this.circularRadio = 1; // 圆锥体和球体直径
         this.circularHeight = 2; // 标记圆锥体高度
-        this.markingColor = "#B48872"; // 标记颜色
-        this.textBackground = "rgba(0, 0, 0, 0.8)"; // 标记文字背景颜色
         this.shapeGeometryObj = {}; // three中shapeGeometry对象数组
         this.mapData = null; // 地图数据
         this.metapNum = 150; // 迁徙路径分段数
         this.meshLineColor = "red"; // 迁徙轨迹颜色// 轨迹标记颜色
-        this.lineWidth = 1; // 迁徙线条宽度
+        this.lineWidth = 20; // 迁徙线条宽度
         this.markingNum = 50; // 迁徙路径标记分段数
         this.dotWidth = 0.5; // 线条上运动的点宽度
         this.areaData = {
@@ -153,18 +157,47 @@ class MAP3D extends contentScene {
                 }
             ]
         }; //地区信息
-        this.getMap(); //获取地图json资源
+        // this.getMap(); //获取地图json资源
+        this.mapParams = {
+            url: "https://sudos.xrdev.cn/map/china.json", //地图地址
+            tier: 1, //地图大小
+            mapColor: "#02A1E2", // 地图正面颜色
+            frontTransparency: 0.5, // 正面透明度
+            sideTransparency: 0.5, // 侧面透明度
+            moveMapColor: "#ff0000", // 地图鼠标移入颜色
+            sideMapColor: "#02A1E2", // 地图侧边颜色
+            markingColor: "#B48872", // 标记颜色
+            borderColor: "#fff", //地图边框颜色
+            textBackground: "rgba(0,0,0,0.8)", // 打点文字背景颜色
+            zHeight: 4,  // 地图z轴厚度
+            centrepoint: [104.0, 37.5], //地图中心点
+            areaData: [],
+        }
     }
     //获取地图json资源
-    getMap(url = "https://sudos.xrdev.cn/map/china.json") {
-        this.fileLoader.load(url, e => {
+    getMap(params) {
+        let num = this.map.children.length
+        for (let i = 0; i < num; i++) {
+            this.map.remove(this.map.children[0]);
+        }
+        this.mapParams = { ...this.mapParams, ...params };
+        this.fileLoader.load(this.mapParams.url, e => {
             this.mapData = JSON.parse(e);
-            this.initMap(JSON.parse(e)); // 绘制地图
-            this.drawMetap(); //绘制线图
-            this.frawFontMarking(); // 绘制标记函数
+            console.log(this.mapData, 11111)
+            this.mapParams.centrepoint = this.mapData.features[0].properties.centroid || this.mapData.features[0].properties.cp;
+            this.initMap(JSON.parse(e),); // 绘制地图
+            // this.drawMetap(); //绘制线图
+            // this.frawFontMarking(); // 绘制标记函数
         });
     }
     async initMap(chinaJson) {
+        let num = this.mapParams.tier === 1 ? 100 : (this.mapParams.tier === 2 ? 1000 : 100)
+        // 墨卡托投影转换
+        this.projection = d3
+            .geoMercator()
+            .center(this.mapParams.centrepoint)
+            .scale(num)
+            .translate([0, 0]);
         // console.log(d3, 111111)
         // function aaa() {
         //     let textureLoader = new THREE.TextureLoader(); // TextureLoader创建一个纹理加载器对象，可以加载图片作为几何体纹理
@@ -187,8 +220,8 @@ class MAP3D extends contentScene {
                 multiPolygon.forEach(polygon => {
                     const shape = new THREE.Shape();
                     const lineMaterial = new THREE.LineBasicMaterial({
-                        color: this.borderColor
-                        // linewidth: 500
+                        color: this.mapParams.borderColor,
+                        // lineWidth: 500
                     });
                     const lineGeometry = new THREE.Geometry();
                     for (let i = 0; i < polygon.length; i++) {
@@ -198,11 +231,11 @@ class MAP3D extends contentScene {
                         }
                         shape.lineTo(x, -y);
                         lineGeometry.vertices.push(
-                            new THREE.Vector3(x, -y, 4.01)
+                            new THREE.Vector3(x, -y, 4.15)
                         );
                     }
                     const extrudeSettings = {
-                        depth: this.zHeight,
+                        depth: this.mapParams.zHeight,
                         bevelEnabled: false
                     }; //地图厚度
                     const geometry = new THREE.ExtrudeGeometry(
@@ -210,15 +243,15 @@ class MAP3D extends contentScene {
                         extrudeSettings
                     );
                     const material = new THREE.MeshBasicMaterial({
-                        color: this.mapColor,
+                        color: this.mapParams.mapColor,
                         transparent: true,
-                        opacity: 0.6
-                    });
+                        opacity: this.mapParams.frontTransparency
+                    });  // 地图正面
                     const material1 = new THREE.MeshBasicMaterial({
-                        color: this.sideMapColor,
+                        color: this.mapParams.sideMapColor,
                         transparent: true,
-                        opacity: 0.5
-                    });
+                        opacity: this.mapParams.sideTransparency
+                    }); // 地图侧面
                     const mesh = new THREE.Mesh(geometry, [
                         material,
                         material1
@@ -238,6 +271,12 @@ class MAP3D extends contentScene {
             this.map.add(province);
         });
         this.map.rotation.x = -0.5 * Math.PI;
+        // this.map.scale.set(1.5, 1.5, 1.5)
+        // this.map.scale = {
+        //     x: 0.9,
+        //     y: 0.9,
+        //     z: 0.9
+        // }
         this.scene.add(this.map);
         this.render();
         this.setRaycaster();
@@ -275,29 +314,28 @@ class MAP3D extends contentScene {
                 true
             );
             if (intersects.length && Event === "click") {
-                // this.scene.remove(this.map);
-                // console.log(this.scene);
-                // this.getMap("https://sudos.xrdev.cn/map/zhejiang.json");
-                // console.log(this.activeInstersect[0].object.parent.properties);
+                let areaValue = this.mapParams.areaData.filter((e) => {
+                    return e.name === this.activeInstersect[0].object.parent.properties.name
+                })
+                if (areaValue.length) {
+                    this.getMap(areaValue[0]);
+                }
             } else {
                 if (this.activeInstersect && this.activeInstersect.length > 0) {
                     this.activeInstersect.forEach(element => {
-                        element.object.material[0].color.set(this.mapColor);
-                        element.object.material[1].color.set(this.sideMapColor);
+                        element.object.material[0].color.set(this.mapParams.mapColor);
+                        element.object.material[1].color.set(this.mapParams.sideMapColor);
                     });
                 }
                 this.activeInstersect = [];
                 for (let i = 0; i < intersects.length; i++) {
-                    if (
-                        intersects[i].object.material &&
-                        intersects[i].object.material.length === 2
-                    ) {
+                    if (intersects[i].object.material && intersects[i].object.material.length === 2) {
                         this.activeInstersect.push(intersects[i]);
                         intersects[i].object.material[0].color.set(
-                            this.moveMapColor
+                            this.mapParams.moveMapColor
                         );
                         intersects[i].object.material[1].color.set(
-                            this.moveMapColor
+                            this.mapParams.moveMapColor
                         );
                         intersects[i].object.geometry.parameters.options.depth =
                             Math.random() * 10;
@@ -311,10 +349,7 @@ class MAP3D extends contentScene {
     }
     // 显示省份的信息
     createProvinceInfo() {
-        if (
-            this.activeInstersect.length !== 0 &&
-            this.activeInstersect[0].object.parent.properties.name
-        ) {
+        if (this.activeInstersect.length !== 0 && this.activeInstersect[0].object.parent.properties.name) {
             let properties = this.activeInstersect[0].object.parent.properties;
             this.provinceInfo.textContent = properties.name;
             // visibility
@@ -335,7 +370,7 @@ class MAP3D extends contentScene {
             metapArray.push({
                 x: x,
                 y: -y,
-                z: this.zHeight
+                z: this.mapParams.zHeight
             });
         });
         // 线条集合
@@ -359,7 +394,7 @@ class MAP3D extends contentScene {
             for (var j = 0; j < this.markingNum; j++) {
                 var aGeo = new THREE.SphereGeometry(this.dotWidth, 10, 10);
                 var aMater = new THREE.MeshPhongMaterial({
-                    color: this.markingColor,
+                    color: this.mapParams.markingColor,
                     transparent: true,
                     opacity: 1 - (j * 1) / this.markingNum
                 });
@@ -421,21 +456,21 @@ class MAP3D extends contentScene {
                     false
                 ),
                 new THREE.MeshBasicMaterial({
-                    color: this.markingColor
+                    color: this.mapParams.markingColor
                 })
             );
             // 球体
             var ball = new THREE.Mesh(
                 new THREE.SphereGeometry(this.circularRadio, 30, 30),
                 new THREE.MeshBasicMaterial({
-                    color: this.markingColor
+                    color: this.mapParams.markingColor
                 })
             );
-            ball.position.set(x, -y, this.circularHeight + this.zHeight);
+            ball.position.set(x, -y, this.circularHeight + this.mapParams.zHeight);
             cylinder.position.set(
                 x,
                 -y,
-                this.circularHeight / 2 + this.zHeight
+                this.circularHeight / 2 + this.mapParams.zHeight
             );
             cylinder.rotation.x = 1.5;
             // 添加文字说明
@@ -456,7 +491,7 @@ class MAP3D extends contentScene {
             fontMesh.scale.x = (e.fontSize / average) * textLength;
             fontMesh.scale.y = e.fontSize / average;
             // 定义提示文字显示位置
-            fontMesh.position.set(x, -y, this.zHeight * 2);
+            fontMesh.position.set(x, -y, this.mapParams.zHeight * 2);
             markingGroup.add(ball);
             markingGroup.add(cylinder);
             markingGroup.add(fontMesh);
@@ -471,7 +506,7 @@ class MAP3D extends contentScene {
         canvas.width = w;
         canvas.height = h;
         var ctx = canvas.getContext("2d");
-        ctx.fillStyle = this.textBackground;
+        ctx.fillStyle = this.mapParams.textBackground;
         ctx.fillRect(0, 0, w, h);
         ctx.font = h + "px '微软雅黑'";
         ctx.textAlign = "center";
