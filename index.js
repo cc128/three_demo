@@ -7,7 +7,7 @@ class contentScene {
         this.renderer = new THREE.WebGLRenderer(); //渲染器
         this.camera = null; //相机
         this.light = null; //光源
-        this.mouse = new THREE.Vector2();
+        this.mouse = new THREE.Vector2(); //二维向量
         this.initCameraXYZ = null; //初值相机位置
     }
     createLight() {
@@ -24,7 +24,7 @@ class contentScene {
         light.shadow.camera.bottom = -500;
         this.scene.add(light); //光源添加到场景中
         // 设置投影
-        light.castShadow = true;
+        light.castShadow = true; //投射影子
         this.light = light;
         return light;
     } //  光源
@@ -159,7 +159,7 @@ class MAP3D extends contentScene {
         }; //地区信息
         // this.getMap(); //获取地图json资源
         this.mapParams = {
-            url: "https://sudos.xrdev.cn/map/china.json", //地图地址
+            url: "./map/全国.json", //地图地址
             tier: 1, //地图大小
             mapColor: "#02A1E2", // 地图正面颜色
             frontTransparency: 0.5, // 正面透明度
