@@ -4,38 +4,40 @@ class contentScene {
         this.width = this.el ? this.el.offsetWidth : window.innerWidth; //窗口宽度
         this.height = this.el ? this.el.offsetHeight : window.innerHeight; //窗口高度
         this.scene = new THREE.Scene(); // 场景
-        this.renderer = new THREE.WebGLRenderer(); //渲染器
+        this.renderer = new THREE.WebGLRenderer({ antialias: true }); //渲染器
         this.camera = null; //相机
         this.light = null; //光源
         this.mouse = new THREE.Vector2(); //二维向量
         this.initCameraXYZ = null; //初值相机位置
     }
     createLight() {
-        // let light = new THREE.PointLight(0xffffff); //点光源/
+        // let light = new THREE.PointLight(0xffffff, 2, 1000, 2); //点光源/
         // let light = new THREE.SpotLight(0xffffff); //聚光灯光源
         let light = new THREE.DirectionalLight(0xffffff); //平行光
-        // let light = new THREE.AmbientLight(0xffffff); //环境光--没有影子
-        light.position.set(-150, 400, -300); //点光源位置
-        light.shadow.camera.near = 0;
+        let light2 = new THREE.AmbientLight(0xffffff); //环境光--没有影子
+        light.position.set(0, 300, 300); //点光源位置
+        light.shadow.camera.near = -1000;
         light.shadow.camera.far = 1000;
-        light.shadow.camera.left = -500;
-        light.shadow.camera.right = 500;
-        light.shadow.camera.top = 500;
-        light.shadow.camera.bottom = -500;
+        light.shadow.camera.left = -1000;
+        light.shadow.camera.right = 1000;
+        light.shadow.camera.top = 1000;
+        light.shadow.camera.bottom = -1000;
         this.scene.add(light); //光源添加到场景中
+        // this.scene.add(light2); //光源添加到场景中
         // 设置投影
         light.castShadow = true; //投射影子
         this.light = light;
         return light;
     } //  光源
-    createCamera(params = { x: 0, y: 300, z: 300 }) {
-        this.camera = new THREE.PerspectiveCamera(20, this.width / this.height, 0.1, 10000);
+    createCamera(params = { x: 0, y: 0, z: 0 }) {
+        this.camera = new THREE.PerspectiveCamera(45, this.width / this.height, 1, 100000);
         this.camera.position.set(params.x, params.y, params.z); //设置相机位置
         this.camera.lookAt(this.scene.position); //设置相机方向(指向的场景对象)
         this.initCameraXYZ = JSON.parse(JSON.stringify(this.camera.position))
         return this.camera;
     } // 摄像机
     createRender() {
+        // this.renderer.setPixelRatio(2);
         this.renderer.setSize(this.width, this.height); //设置渲染区域尺寸
         // this.renderer.setClearColor(0xffffff, 1); //设置背景颜色
         // this.scene.background = new THREE.CubeTextureLoader().load(["https://www.baidu.com/img/PCtm_d9c8750bed0b3c7d089fa7d55720d6cf.png"]);; //作为背景贴图
@@ -67,6 +69,8 @@ class contentScene {
             this.camera,
             this.renderer.domElement
         ); //创建控件对象
+        // controls.maxPolarAngle = 0.3; // 上下翻转的最大角度
+        // controls.minPolarAngle = 0.3; // 上下翻转的最小角度
         // controls.zoomSpeed = 0.4; // 滚轮-滚动速度
         controls.rotateSpeed = 0.5; // 拖到旋转速度
         controls.dampingFactor = 0.1;
@@ -74,7 +78,7 @@ class contentScene {
             // if (this.isMover) return;
             this.initCameraXYZ = JSON.parse(JSON.stringify(this.camera.position))
             // console.log(this.initCameraXYZ)
-            console.log(this.camera)
+            // console.log(this.camera)
             this.renderer.render(this.scene, this.camera);
         }); //监听鼠标、键盘事件
 
@@ -105,7 +109,7 @@ class contentScene {
     render() {
         this.renderer.render(this.scene, this.camera);
     } //执行渲染操作   指定场景、相机作为参数
-    createPlane(w = 200, h = 200, z = -0.1) {
+    createPlane(w = 200, h = 200, z = -10) {
         let planeGeometry = new THREE.PlaneGeometry(w, h);
         let material = new THREE.MeshLambertMaterial({
             color: 0xffffff
@@ -113,7 +117,7 @@ class contentScene {
         }); //Lambert网格材质，与光照有反应，漫反射
         let plane = new THREE.Mesh(planeGeometry, material);
         plane.rotation.x = -0.5 * Math.PI;
-        plane.position.set(0, z, 0); //位置
+        // plane.position.set(0, z, 0); //位置
         this.scene.add(plane);
         // 设置投影
         plane.receiveShadow = true;
@@ -186,8 +190,8 @@ class MAP3D extends contentScene {
             console.log(this.mapData, 11111)
             this.mapParams.centrepoint = this.mapData.features[0].properties.centroid || this.mapData.features[0].properties.cp;
             this.initMap(JSON.parse(e),); // 绘制地图
-            // this.drawMetap(); //绘制线图
-            // this.frawFontMarking(); // 绘制标记函数
+            this.drawMetap(); //绘制线图
+            this.frawFontMarking(); // 绘制标记函数
         });
     }
     async initMap(chinaJson) {
@@ -553,9 +557,14 @@ class SCENE extends contentScene {
         super(el);
         // this.isMover = false;
         this.fbxloader = new THREE.FBXLoader(); //FBX加载器
+        this.glbloader = new THREE.GLTFLoader(); //glb加载器
+        this.objloader = new THREE.OBJLoader(); //obj加载器
+        this.MTLLoader = new THREE.MTLLoader(); //材质文件加载器
+
 
         this.mixer = null;
         this.fbx = null; //模型
+        this.glb = null;
 
         this.clock = new THREE.Clock(); // 创建一个时钟对象Clock
 
@@ -575,27 +584,76 @@ class SCENE extends contentScene {
     // 导入模型
     createFBX(callBack) {
         return new Promise((resolve, reject) => {
-            this.fbxloader.load(
-                "./Walk.fbx",
-                fbx => {
-                    this.fbx = fbx;
-                    fbx.traverse(item => {
-                        if (item instanceof THREE.Mesh) {
-                            item.castShadow = true;
-                            item.receiveShadow = true;
-                        }
-                    });
-                    this.scene.add(fbx);
-                    this.createAnimation(fbx);
-                    resolve(fbx);
-                },
-                onProgress => {
-                    callBack(onProgress);
-                },
-                onError => {
-                    reject(onError);
-                }
-            );
+            // this.glbloader.load(
+            //     "./aaaa/ZJZ_2(1).glb",
+            //     glb => {
+            //         console.log(glb, 111111)
+            //         this.glb = glb;
+            //         this.scene.add(glb.scene);
+            //         // console.log(glb, 111111)
+            //         resolve(glb);
+            //     },
+            //     onProgress => {
+            //         callBack(onProgress);
+            //     },
+            //     onError => {
+            //         reject(onError);
+            //     }
+            // )
+
+            // this.MTLLoader.load("./cs/453.mtl", (materials) => {
+            //     this.objloader.setMaterials(materials);
+            //     this.objloader.load(
+            //         "./cs/453.obj",
+            //         m => {
+            //             console.log(m, 111111)
+            //             if(m.isGroup) {
+            //                 m.traverse((e) => {
+            //                     if(e.isMesh) {
+            //                         e.material.side = THREE.DoubleSide;
+            //                     }
+            //                 })
+            //             }
+            //             this.glb = m;
+            //             m.scale.set(3, 3, 3);
+            //             // m.children[0].material.color.set(0xe8b73b);
+            //             // m.rotation.x = 1;
+            //             // m.rotation.y = 0.3;
+            //             // m.scale.set(10, 10, 10); //放大obj组对象
+            //             this.scene.add(m);
+            //             // console.log(glb, 111111)
+            //             resolve(m);
+            //         },
+            //         onProgress => {
+            //             callBack(onProgress);
+            //         },
+            //         onError => {
+            //             reject(onError);
+            //         }
+            //     )
+            // })
+
+            // this.fbxloader.load(
+            //     "./Sauna_FBX_2009.FBX",
+            //     fbx => {
+            //         this.fbx = fbx;
+            //         fbx.traverse(item => {
+            //             if (item instanceof THREE.Mesh) {
+            //                 item.castShadow = true;
+            //                 item.receiveShadow = true;
+            //             }
+            //         });
+            //         this.scene.add(fbx);
+            //         // this.createAnimation(fbx);
+            //         resolve(fbx);
+            //     },
+            //     onProgress => {
+            //         callBack(onProgress);
+            //     },
+            //     onError => {
+            //         reject(onError);
+            //     }
+            // );
         });
     }
     //加载模板动画
@@ -609,17 +667,17 @@ class SCENE extends contentScene {
         this.AnimationAction = AnimationAction;
         this.runAnimation();
         // 渲染函数
-        // const render = () => {
-        //     this.renderer.render(this.scene, this.camera); //执行渲染操作
-        //     window.requestAnimationFrame(render); //请求再次执行渲染函数render，渲染下一帧
-        //     if (mixer !== null) {
-        //         //clock.getDelta()方法获得两帧的时间间隔
-        //         // 更新混合器相关的时间
-        //         // console.log(clock.getDelta(), 1111);
-        //         mixer.update(0.015);
-        //     }
-        // };
-        // render();
+        const render = () => {
+            this.renderer.render(this.scene, this.camera); //执行渲染操作
+            window.requestAnimationFrame(render); //请求再次执行渲染函数render，渲染下一帧
+            if (mixer !== null) {
+                //clock.getDelta()方法获得两帧的时间间隔
+                // 更新混合器相关的时间
+                // console.log(clock.getDelta(), 1111);
+                mixer.update(0.015);
+            }
+        };
+        render();
     }
     //执行动画-每次多少帧
     runAnimation(isContinue) {

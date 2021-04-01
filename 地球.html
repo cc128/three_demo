@@ -34,9 +34,13 @@
 <!-- 引入fbx模型加载库FBXLoader -->
 <!-- <script src="http://www.yanhuangxueyuan.com/versions/threejsR92/examples/js/loaders/FBXLoader.js"></script> -->
 <script src="js/FBXLoader.js"></script>
+<script src="js/GLTFLoader.js"></script>
 <!-- 辅助文件 -->
 <!-- <script src="http://www.yanhuangxueyuan.com/versions/threejsR92/examples/js/libs/inflate.min.js"></script> -->
 <script src="js/inflate.js"></script>
+
+<!-- vr -->
+<script src="js/VRButton.js"></script>
 
 <style>
     html,
@@ -57,56 +61,254 @@
         position: relative;
         /* border: 1px solid red; */
     }
+
+    .compass {
+        width: 100px;
+        position: fixed;
+        top: 50px;
+        right: 50px;
+    }
+
+    .nav-box {
+        position: fixed;
+        top: 50px;
+        right: 200px;
+        perspective: 900px;
+    }
+
+    .nav-box1 {
+        width: 100px;
+        height: 100px;
+        transform-style: preserve-3d;
+        text-align: center;
+        line-height: 100px;
+        color: purple;
+        font-weight: bold;
+    }
+
+    .box1 {
+        width: 100%;
+        height: 100%;
+        background: red;
+        box-shadow: 0 0 10px red;
+        transform: translateZ(50px);
+        position: absolute;
+        opacity: 0.8;
+    }
+
+    .box2 {
+        width: 100%;
+        height: 100%;
+        background: green;
+        box-shadow: 0 0 10px green;
+        transform: translateZ(-50px) rotateY(180deg);
+        position: absolute;
+        opacity: 0.8;
+    }
+
+    .box3 {
+        width: 100%;
+        height: 100%;
+        background: blue;
+        box-shadow: 0 0 10px blue;
+        transform: rotateX(90deg) translateZ(50px);
+        position: absolute;
+        opacity: 0.8;
+    }
+
+    .box4 {
+        width: 100%;
+        height: 100%;
+        background: white;
+        box-shadow: 0 0 10px white;
+        transform: rotateX(-90deg) translateZ(50px);
+        position: absolute;
+        opacity: 0.8;
+    }
+
+    .box5 {
+        width: 100%;
+        height: 100%;
+        background: yellow;
+        box-shadow: 0 0 10px yellow;
+        transform: rotateY(-90deg) translateZ(50px);
+        position: absolute;
+        opacity: 0.8;
+    }
+
+    .box6 {
+        width: 100%;
+        height: 100%;
+        background: black;
+        box-shadow: 0 0 10px black;
+        transform: rotateY(90deg) translateZ(50px);
+        position: absolute;
+        opacity: 0.8;
+    }
 </style>
 
 <body>
-    <div id="globe">
+    <div id="globe"></div>
+    <img class="compass" src="./compass.svg" alt="" srcset="">
+    <div class="nav-box">
+        <div class="nav-box1">
+            <div class="box1">前</div>
+            <div class="box2">后</div>
+            <div class="box3">上</div>
+            <div class="box4">下</div>
+            <div class="box5">左</div>
+            <div class="box6">右</div>
+        </div>
     </div>
 </body>
 <script src="index.js"></script>
 <script>
     let Scene = new SCENE(document.getElementById("globe"));
     Scene.createLight(); //光源
-    Scene.createCamera({ x: 0, y: 400, z: -950 }); //摄像机
+    let camera = Scene.createCamera({ x: 200, y: 0, z: 0 }); //摄像机
+    // setInterval(() => {
+
+    // }, 100);
+
     Scene.createRender(); //渲染器
     // Scene.cameraHelper(); //光源辅助线
-    // Scene.axesHelper(); //坐标辅助线
-    Scene.createPlane(1000, 1000); //平面
+    Scene.axesHelper(); //坐标辅助线
+    // Scene.createPlane(2000, 2000); //平面
     // Scene.gridHelper(1000, 10); //平面辅助线
     //创建网格模型
-    // let geometry = new THREE.BoxGeometry(100, 100, 100);
-    let geometry = new THREE.SphereGeometry(60, 25, 25);
+    let geometry = new THREE.BoxGeometry(30, 30, 30);
+    // let geometry = new THREE.SphereGeometry(60, 25, 25);
     // let material2 = new THREE.MeshBasicMaterial({ color: 0x00ff00 }); //基础网格材质，不受光照影响的材质
     // let material2 = new THREE.MeshLambertMaterial({ color: 0x00ff00 }); //Lambert网格材质，与光照有反应，漫反射
     // let material2 = new THREE.MeshPhongMaterial({ color: 0x00ff00 }); //高光Phong材质,与光照有反应
     // let material2 = new THREE.MeshStandardMaterial({ color: 0x00ff00 }); //PBR物理材质，相比较高光Phong材质可以更好的模拟金属、玻璃等效果
+
+    var geometry2 = new THREE.Geometry();
+    var lineMaterial = new THREE.LineBasicMaterial({
+        wireframe: true,
+        color: '#000000'
+    });
+    for (let i = Math.PI * 2; i <= Math.PI * 2; i -= 0.1) {
+        if (i <= 0) {
+            break;
+        }
+        let xy = new THREE.Vector3(500 * Math.sin(i), 0, 500 * Math.cos(i), 0);
+        geometry2.vertices.push(xy);
+    }
+    var line = new THREE.LineLoop(geometry2, lineMaterial);
+    line.position.setY(80)
+    Scene.scene.add(line);
+
+    var texture = new THREE.TextureLoader().load("./材质/a.png");
+    // 创建精灵材质对象SpriteMaterial
+    var spriteMaterial = new THREE.SpriteMaterial({
+        // color: 0xffffff,//设置精灵矩形区域颜色
+        // rotation: Math.PI / 2,//旋转精灵对象45度，弧度值
+        map: texture,//设置精灵纹理贴图
+        sizeAttenuation: false,
+    });
+    // 创建精灵模型对象，不需要几何体geometry参数
+    var sprite = new THREE.Sprite(spriteMaterial);
+    Scene.scene.add(sprite);
+    sprite.center.set(0.5, 0)
+    // 控制精灵大小，比如可视化中精灵大小表征数据大小
+    // sprite.scale.set(0.02, 0.0288, 1); //// 只需要设置x、y两个分量就可以
+    sprite.scale.set(0.05, 0.05, 1); //// 只需要设置x、y两个分量就可以
+    sprite.position.set(0, 35, 0); //// 只需要设置x、y两个分量就可以
+
+    // var curve = new THREE.CatmullRomCurve3([
+    //     new THREE.Vector3(-10, 0, 10),
+    //     new THREE.Vector3(-5, 5, 5),
+    //     new THREE.Vector3(0, 0, 0),
+    //     new THREE.Vector3(5, -5, 5),
+    //     new THREE.Vector3(10, 0, 10)
+    // ]);
+    // var tubeGeometry = new THREE.TubeGeometry(curve, 100, 0.9, 50, false);
+    // var textureLoader = new THREE.TextureLoader();
+    // var texture = textureLoader.load('./地球1.jpg');
+    // texture.wrapS = THREE.RepeatWrapping
+    // texture.wrapT = THREE.RepeatWrapping
+    // // 设置x方向的偏移(沿着管道路径方向)，y方向默认1
+    // //等价texture.repeat= new THREE.Vector2(20,1)
+    // texture.repeat.x = 20;
+    // var tubeMaterial = new THREE.MeshPhongMaterial({
+    //     map: texture,
+    //     transparent: true,
+    // });
+
+    // // 设置数组材质对象作为网格模型材质参数
+    // var mesh = new THREE.Mesh(tubeGeometry, tubeMaterial); //网格模型对象Mesh
+    // Scene.scene.add(mesh); //网格模型添加到场景中
+    let compass = document.getElementsByClassName("compass")[0];
+    let navBox = document.getElementsByClassName("nav-box1")[0];
+
+    var animate = function () {
+        requestAnimationFrame(animate);
+        // controls.update();
+        Scene.render();
+        // texture.offset.x -= 0.06
+        let x1 = new THREE.Vector3(camera.position.x, 0, camera.position.z);
+        let y1 = new THREE.Vector3(camera.position.x, camera.position.y, 0);
+        let v1 = new THREE.Vector3(0.1, 0, 0);
+
+
+        let a = x1.angleTo(v1);
+        let b = y1.angleTo(v1);
+        if (x1.z > 0) a = -a;
+        if (y1.y > 0) b = -b;
+        // console.log(y1)
+        // console.log(b / (Math.PI / 180));
+        compass.style.transform = "rotateZ(" + a + "rad)";
+        // navBox.style.transform = "rotateY(" + -a + "rad)" ;
+        // navBox.style.transform = "rotateX(" + b + "rad)" ;
+        navBox.style.transform = `rotateY(${-a}rad) rotateX(${b}rad)`;
+        // console.log(y1.y)
+    };
+    animate();
+    // Scene.render();
     let textureLoader = new THREE.TextureLoader(); // TextureLoader创建一个纹理加载器对象，可以加载图片作为几何体纹理
-    textureLoader.load("./earth.jpg", function (texture) {
+    textureLoader.load("./地球1.jpg", function (a) {
         var material = new THREE.MeshLambertMaterial({
             // color: 0x0000ff,
             // 设置颜色纹理贴图：Texture对象作为材质map属性的属性值
-            map: texture //设置颜色贴图属性值
+            map: a //设置颜色贴图属性值
         }); //材质对象Material
         let mesh = new THREE.Mesh(geometry, material);
-        mesh.position.set(0, 80, 0); //位置
+        mesh.position.set(0, 0, 0); //位置
         Scene.scene.add(mesh); //网格模型添加到场景中
         mesh.castShadow = true;
         Scene.render();
         let T0 = new Date(); //上次时间
-        function render() {
+        let n = Math.PI * 2;
+        let r = 500;
+        let render = () => {
             let T1 = new Date(); //本次时间
             let t = T1 - T0; //时间差
             T0 = T1; //把本次时间赋值给上次时间
             Scene.render();
             // renderer.render(scene, camera); //执行渲染操作
-            // mesh1.rotateY(0.001 * t); //旋转角速度0.001弧度每毫秒
-            // mesh2.rotateY(0.001 * t); //旋转角速度0.001弧度每毫秒
-            // mesh3.rotateY(0.001 * t); //旋转角速度0.001弧度每毫秒
             mesh.rotateY(0.001 * t); //旋转角速度0.001弧度每毫秒
+            // mesh.rotateX(0.001 * t); //旋转角速度0.001弧度每毫秒
+            // mesh.rotateZ(0.001 * t); //旋转角速度0.001弧度每毫秒
+            if (n < 0) {
+                n = Math.PI * 2;
+            }
+            // mesh.position.setX(r * Math.sin(n));
+            // mesh.position.setZ(r * Math.cos(n));
+            n -= 0.01;
             requestAnimationFrame(render);
         }
-        render();
+        // mesh.rotateY(2); //旋转角速度0.001弧度每毫秒
+        // mesh.rotateX(0.001 * t); //旋转角速度0.001弧度每毫秒
+        // mesh.rotateZ(0.001 * t); //旋转角速度0.001弧度每毫秒
+        // render();
     });
+
+    // const VRButton = require("js/VRButton.js");
+    // let VRB = new VRButton()
+    // console.log(Scene.renderer)
+    // Scene.renderer.vr.enabled = true;
+    // document.body.appendChild(VRB.createButton(Scene.renderer));
 </script>
 
 </html>

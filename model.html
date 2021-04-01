@@ -28,6 +28,7 @@
 <script src="js//OBJLoader.js"></script>
 <!-- <script src="http://www.yanhuangxueyuan.com/threejs/examples/js/loaders/MTLLoader.js"></script> -->
 <script src="js/MTLLoader.js"></script>
+<script src="js/GLTFLoader.js"></script>
 
 <script src="js/MeshLine.js"></script>
 
@@ -125,10 +126,11 @@
     let X = 0;
     let rotateY = 0;
     let Scene = new SCENE(document.getElementById("model"));
+    Scene.createCamera({ x: 0, y: 20, z: -20 }); //摄像机
     Scene.createLight(); //光源
-    Scene.createCamera({ x: 0, y: 2000, z: -2000 }); //摄像机
     Scene.createRender(); //渲染器
     Scene.createFBX(Progress => {
+        console.log(Progress, 22222222)
         document.getElementsByClassName("bg")[0].style.display = "block";
         document.getElementsByClassName("bg")[0].innerHTML = "模型加载(" + parseInt(Progress.loaded / Progress.total * 100) + "%)"
     }).then(
@@ -144,7 +146,7 @@
     );
     // Scene.cameraHelper(); //光源辅助线
     // Scene.axesHelper(); //坐标辅助线
-    Scene.createPlane(1000, 1000); //平面
+    // Scene.createPlane(1000, 1000); //平面
     Scene.gridHelper(1000, 10); //平面辅助线
     Scene.render();
     document.addEventListener("keydown", e => {
